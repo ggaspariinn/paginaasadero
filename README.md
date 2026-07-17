@@ -30,10 +30,7 @@ Antes de publicar:
 1. Reemplaza `https://www.ejemplo-asadero.gt/` por el dominio real en
    `index.html` (canonical, Open Graph, JSON-LD `hasMenu`), `robots.txt`
    y `sitemap.xml`.
-2. Revisa los dos ítems del menú marcados como "Por confirmar" en
-   `data.js` (categorías Entradas y Fuertes) — no se pudieron leer
-   con certeza en la fotografía de la pizarra.
-3. Aclara el horario: la ficha de Google dice 9:00 a.m.–10:00 p.m. todos
+2. Aclara el horario: la ficha de Google dice 9:00 a.m.–10:00 p.m. todos
    los días (lo que se publicó), pero una publicación de Facebook del
    negocio menciona "12pm a 9:30pm". Confirma cuál es el vigente y
    actualiza `RESTAURANT.hours` en `data.js` si hace falta.
@@ -74,12 +71,10 @@ actualizan automáticamente al modificar `menuCategories`.
 - Precio de "Tacos de Camarón": Google lo destaca como plato, pero no
   aparece con ese nombre exacto en la pizarra fotografiada; no se
   inventó un precio.
-- Dos líneas de la pizarra (una entrada ~Q35 y un fuerte de camarones
-  ~Q125) no son legibles con certeza; se muestran como "Por confirmar".
 - Mapa embebido: se usa un botón "Abrir en Google Maps" en vez de un
   iframe embebido, porque un mapa embebido de calidad requiere una
   clave de API de Google Maps que no fue proporcionada.
-- Formulario de reservas: no se implementó porque no hay backend ni
-  servicio de reservas real; la acción principal es llamar por
+- Formulario de disponibilidad: no se implementó porque no hay backend ni
+  servicio de agenda real; la acción principal es llamar por
   teléfono, que es el único canal de contacto confirmado además de
   redes sociales.

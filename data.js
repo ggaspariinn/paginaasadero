@@ -10,10 +10,6 @@
  *    (@asadero_guatemala) y su página de Facebook oficial (mismo teléfono).
  *  - Fotografías de platillos: proporcionadas por el negocio.
  *
- * Dos líneas de la pizarra (una entrada y un fuerte de camarones) no son
- * legibles con certeza y se marcan con needsReview: true en vez de
- * inventar su nombre. Revísalas y complétalas aquí cuando tengas el dato.
- *
  * Para actualizar el sitio (nuevo horario, nuevo plato, nueva opinión),
  * edita únicamente este archivo.
  */
@@ -68,7 +64,7 @@ const RESTAURANT = {
     { label: "Consumo en el lugar", available: true },
     { label: "Para llevar", available: true },
     { label: "Entrega a domicilio", available: true },
-    { label: "Reservas", available: null, note: "Solo por llamada telefónica" },
+    { label: "Confirmar disponibilidad", available: null, note: "Por llamada telefónica" },
   ],
 
   // Horario confirmado directamente por el negocio (ficha de Google).
@@ -133,8 +129,6 @@ const RESTAURANT = {
   ],
 
   // Menú completo transcrito de la pizarra física del restaurante.
-  // Los ítems con needsReview no se muestran con nombre inventado: se
-  // listan como "Por confirmar" hasta que el negocio los revise.
   menuCategories: [
     {
       name: "Entradas",
@@ -143,7 +137,6 @@ const RESTAURANT = {
         { name: "Berenjena confitada", price: "Q 65" },
         { name: "Bolitas de morcilla", price: "Q 35" },
         { name: "Camarones a la Picona", price: "Q 88" },
-        { name: "Por confirmar", price: "Q 35", needsReview: true },
       ],
     },
     {
@@ -183,7 +176,6 @@ const RESTAURANT = {
       items: [
         { name: "Brocheta", price: "Q 75" },
         { name: "Camarones con dos tostadas", price: "Q 125" },
-        { name: "Por confirmar", price: "Q 125", needsReview: true },
       ],
     },
     {
@@ -216,36 +208,36 @@ const RESTAURANT = {
     },
   ],
 
-  menuSourceNote:
-    "Menú transcrito de la pizarra física del restaurante. Dos ítems no se alcanzan a leer con certeza y se muestran como \"Por confirmar\". Los precios pueden variar; el negocio invita a guiarse también por las publicaciones de su Instagram.",
-
   reviews: [
     {
-      author: "Luna Rouge",
-      meta: "4 opiniones · 24 fotos",
-      when: "Hace 2 meses",
-      text:
-        "Mi experiencia en Asadero fue regular. El tiempo de espera para la comida fue más largo de lo esperado.",
+      author: "Esperanza López",
+      meta: "Local Guide · 66 opiniones · 345 fotos",
+      when: "Hace 2 años",
+      rating: 5,
+      text: "Excelente! Ambiente abierto, maravilloso trato y comida deliciosa 😋",
       source: "Google",
     },
     {
-      author: "Lucy Mendoza",
-      meta: "Local Guide · 216 opiniones · 685 fotos",
-      when: "Hace 5 años (editada)",
-      text: "Excelente atención y la comida súper deliciosa.",
+      author: "David Guerra",
+      meta: "Local Guide · 38 opiniones · 7 fotos",
+      when: "Hace 3 años",
+      rating: 5,
+      text: "Muy buena comida, excelente sabor y buen menu con bastantes opciones.",
       source: "Google",
     },
     {
-      author: "Douglas López",
-      meta: "Local Guide · 83 opiniones · 231 fotos",
-      when: "Hace un mes",
+      author: "David Mendez",
+      meta: "Local Guide · 67 opiniones · 10 fotos",
+      when: "Hace 3 años",
+      rating: 5,
       text:
-        "Súper recomendado, bebidas deliciosas y ambiente especial. Un lugar fuera de serie.",
+        "Muy bonito lugar, excelente servicio, riquísimos los platos, lo que coman seguro les va gustar...",
       source: "Google",
     },
   ],
 
-  reviewsTotalNote: "98 opiniones adicionales visibles en Google (no incluidas aquí).",
+  reviewsTotalNote:
+    "Selección de opiniones de 5 estrellas que destacan comida, atención y ambiente. Consulta las 101 opiniones completas en Google.",
 };
 
 if (typeof module !== "undefined") {

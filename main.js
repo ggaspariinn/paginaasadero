@@ -122,7 +122,7 @@
             .map(
               (item) => `
             <li class="menu-line">
-              <span class="name${item.needsReview ? " needs-review" : ""}">${item.name}</span>
+              <span class="name">${item.name}</span>
               <span class="filler" aria-hidden="true"></span>
               <span class="price">${item.price}</span>
             </li>`
@@ -141,13 +141,6 @@
         : "Sin resultados para esta búsqueda";
     }
 
-    const note = document.getElementById("menuSourceNote");
-    if (note) {
-      note.innerHTML = `
-        <svg aria-hidden="true"><use href="#icon-clock"></use></svg>
-        <p>${RESTAURANT.menuSourceNote}</p>
-      `;
-    }
   }
 
   function setupMenuExplorer() {
@@ -210,6 +203,7 @@
       .map(
         (r) => `
       <article class="review-card">
+        <span class="review-rating" aria-label="${r.rating} de 5 estrellas">${"★".repeat(r.rating)}</span>
         <p class="review-quote">${r.text}</p>
         <div class="review-author">
           <strong>${r.author}</strong>
@@ -404,6 +398,35 @@
     sections.forEach((section) => observer.observe(section));
   }
 
+  function setupScrollReveal() {
+    const targets = document.querySelectorAll(
+      ".section-head, .proof-item, .about-copy, .trait, .menu-card, .menu-category, .rating-summary, .review-card, .info-card, .location-panel"
+    );
+    if (!targets.length) return;
+
+    if (!("IntersectionObserver" in window) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      targets.forEach((target) => target.classList.add("reveal-item", "is-visible"));
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        });
+      },
+      { rootMargin: "0px 0px -8%", threshold: 0.12 }
+    );
+
+    targets.forEach((target, index) => {
+      target.classList.add("reveal-item");
+      target.style.setProperty("--reveal-delay", `${(index % 3) * 80}ms`);
+      observer.observe(target);
+    });
+  }
+
   function setupMobileNav() {
     const toggle = document.getElementById("navToggle");
     const panel = document.getElementById("mobilePanel");
@@ -447,6 +470,7 @@
     setupAddressCopy();
     setupHeaderState();
     setupActiveNavigation();
+    setupScrollReveal();
     setFooterYear();
   });
 })();
