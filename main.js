@@ -1,14 +1,7 @@
 /**
- * main.js
- * Renderiza el contenido dinámico del sitio a partir de RESTAURANT
- * (data.js) y maneja la interacción de la interfaz: explorador de carta,
- * navegación, estado de horario, copia de dirección y pie de página.
- *
- * No depende de librerías externas ni de conexión a internet en tiempo
- * de ejecución (aparte de las tipografías de Google Fonts declaradas en
- * el CSS).
+ * Interacciones y renderizado del sitio de Asadero Bar & Grill.
+ * Toda la información comercial vive en data.js.
  */
-
 (function () {
   "use strict";
 
@@ -17,30 +10,31 @@
     query: "",
   };
 
-  /** Obtiene un valor anidado de un objeto a partir de una ruta "a.b.c". */
-  function getPath(obj, path) {
-    return path.split(".").reduce((acc, key) => (acc == null ? acc : acc[key]), obj);
+  let revealObserver = null;
+
+  function getPath(object, path) {
+    return path.split(".").reduce((value, key) => (value == null ? value : value[key]), object);
   }
 
-  /** Une elementos data-bind / data-bind-href en el DOM con RESTAURANT. */
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   function bindData(root) {
-    root.querySelectorAll("[data-bind]").forEach((el) => {
-      const value = getPath(RESTAURANT, el.dataset.bind);
-      if (value !== undefined && value !== null) {
-        el.textContent = value;
-      }
+    root.querySelectorAll("[data-bind]").forEach((element) => {
+      const value = getPath(RESTAURANT, element.dataset.bind);
+      if (value !== undefined && value !== null) element.textContent = value;
     });
 
-    root.querySelectorAll("[data-bind-href]").forEach((el) => {
-      const value = getPath(RESTAURANT, el.dataset.bindHref);
-      if (value) {
-        el.setAttribute("href", value);
-      }
+    root.querySelectorAll("[data-bind-href]").forEach((element) => {
+      const value = getPath(RESTAURANT, element.dataset.bindHref);
+      if (value) element.setAttribute("href", value);
     });
-  }
-
-  function imgPath(name, ext) {
-    return `assets/img/optimized/${name}.${ext}`;
   }
 
   function normalizeText(value) {
@@ -55,92 +49,101 @@
     return normalizeText(name).replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   }
 
-  function pictureMarkup({ image, alt, width = 420, height = 525, lazy = true }) {
-    const loadingAttr = lazy ? 'loading="lazy" decoding="async"' : 'decoding="async"';
-    return `
-      <picture>
-        <source srcset="${imgPath(image, "webp")}" type="image/webp" />
-        <img src="${imgPath(image, "jpg")}" alt="${alt}" width="${width}" height="${height}" ${loadingAttr} />
-      </picture>
-    `;
+  function restaurantImage(filename) {
+    return `assets/img/restaurant/${filename}`;
   }
 
-  function renderMenu() {
-    const grid = document.getElementById("menuGrid");
+  function renderFeaturedImages() {
+    const grid = document.getElementById("featuredGrid");
     if (!grid) return;
-    grid.innerHTML = RESTAURANT.menuHighlights
+
+    grid.innerHTML = RESTAURANT.featuredImages
       .map(
-        (item) => `
-      <article class="menu-card">
-        <div class="menu-card-media">
-          ${pictureMarkup({ image: item.image, alt: item.alt, width: 480, height: 330 })}
-        </div>
-        <div class="menu-card-body">
-          <span class="menu-card-kicker">${item.category}</span>
-          <h3>${item.name}</h3>
-          <p>${item.description}</p>
-          <div class="tag-row">
-            ${item.tags.map((t) => `<span class="tag">${t}</span>`).join("")}
-            <span class="tag tag-price">${item.price ? item.price : item.priceNote || ""}</span>
-          </div>
-          ${
-            item.sourcePost
-              ? `<a class="menu-card-link" href="${item.sourcePost}" target="_blank" rel="noopener">Ver publicación oficial <svg aria-hidden="true"><use href="#icon-external"></use></svg></a>`
-              : ""
-          }
-        </div>
-      </article>`
+        (item, index) => `
+          <article class="flavor-card flavor-card--${index + 1}">
+            <div class="flavor-photo">
+              <img
+                src="${restaurantImage(escapeHtml(item.image))}"
+                alt="${escapeHtml(item.alt)}"
+                width="${index === 1 ? 563 : 476}"
+                height="${index === 1 ? 422 : 635}"
+                loading="lazy"
+                decoding="async"
+              />
+              <span class="flavor-number">0${index + 1}</span>
+            </div>
+            <div class="flavor-copy">
+              <span>${escapeHtml(item.eyebrow)}</span>
+              <h3>${escapeHtml(item.name)}</h3>
+              <p>${escapeHtml(item.description)}</p>
+            </div>
+          </article>
+        `
       )
       .join("");
   }
 
-  function renderMenuCategories() {
-    const wrap = document.getElementById("menuCategories");
-    if (!wrap) return;
-
-    const visibleCategories = RESTAURANT.menuCategories
-      .filter((cat) => menuState.category === "all" || categoryKey(cat.name) === menuState.category)
-      .map((cat) => {
-        const items = cat.items.filter((item) => {
+  function getVisibleMenuCategories() {
+    return RESTAURANT.menuCategories
+      .filter((category) => menuState.category === "all" || categoryKey(category.name) === menuState.category)
+      .map((category) => {
+        const items = category.items.filter((item) => {
           if (!menuState.query) return true;
-          return normalizeText(`${cat.name} ${item.name}`).includes(menuState.query);
+          return normalizeText(`${category.name} ${item.name}`).includes(menuState.query);
         });
-        return { ...cat, items };
+        return { ...category, items };
       })
-      .filter((cat) => cat.items.length > 0);
+      .filter((category) => category.items.length > 0);
+  }
 
-    const visibleItems = visibleCategories.reduce((total, cat) => total + cat.items.length, 0);
+  function renderMenuCategories() {
+    const container = document.getElementById("menuCategories");
+    if (!container) return;
 
-    wrap.innerHTML = visibleCategories.length
-      ? visibleCategories
-      .map(
-        (cat) => `
-      <section class="menu-category" data-category="${categoryKey(cat.name)}">
-        <h3>${cat.name}</h3>
-        <ul>
-          ${cat.items
-            .map(
-              (item) => `
-            <li class="menu-line">
-              <span class="name">${item.name}</span>
-              <span class="filler" aria-hidden="true"></span>
-              <span class="price">${item.price}</span>
-            </li>`
-            )
-            .join("")}
-        </ul>
-      </section>`
-      )
-      .join("")
-      : `<div class="menu-empty"><strong>No encontramos ese platillo.</strong><span>Prueba otra palabra o selecciona “Todo”.</span></div>`;
+    const categories = getVisibleMenuCategories();
+    const itemCount = categories.reduce((total, category) => total + category.items.length, 0);
+
+    container.innerHTML = categories.length
+      ? categories
+          .map(
+            (category) => `
+              <section class="menu-category">
+                <div class="menu-category-heading">
+                  <h3>${escapeHtml(category.name)}</h3>
+                  <span>${String(category.items.length).padStart(2, "0")}</span>
+                </div>
+                <ul>
+                  ${category.items
+                    .map(
+                      (item) => `
+                        <li>
+                          <span class="dish-name">${escapeHtml(item.name)}</span>
+                          <span class="dish-line" aria-hidden="true"></span>
+                          <strong>${escapeHtml(item.price)}</strong>
+                        </li>
+                      `
+                    )
+                    .join("")}
+                </ul>
+              </section>
+            `
+          )
+          .join("")
+      : `
+          <div class="menu-empty">
+            <strong>No encontramos ese platillo.</strong>
+            <span>Prueba otra palabra o vuelve a “Todo”.</span>
+          </div>
+        `;
 
     const results = document.getElementById("menuResults");
     if (results) {
-      results.textContent = visibleItems
-        ? `${visibleItems} ${visibleItems === 1 ? "platillo" : "platillos"} en ${visibleCategories.length} ${visibleCategories.length === 1 ? "categoría" : "categorías"}`
-        : "Sin resultados para esta búsqueda";
+      results.textContent = itemCount
+        ? `${itemCount} ${itemCount === 1 ? "platillo" : "platillos"} · ${categories.length} ${categories.length === 1 ? "categoría" : "categorías"}`
+        : "Sin resultados";
     }
 
+    registerRevealTargets(container);
   }
 
   function setupMenuExplorer() {
@@ -148,28 +151,36 @@
     const search = document.getElementById("menuSearch");
     if (!filters || !search) return;
 
-    const categories = RESTAURANT.menuCategories.map((cat) => ({
-      label: cat.name,
-      value: categoryKey(cat.name),
-    }));
-
-    filters.innerHTML = [
+    const categories = [
       { label: "Todo", value: "all" },
-      ...categories,
-    ]
+      ...RESTAURANT.menuCategories.map((category) => ({
+        label: category.name,
+        value: categoryKey(category.name),
+      })),
+    ];
+
+    filters.innerHTML = categories
       .map(
-        (cat) => `<button type="button" class="menu-filter${cat.value === "all" ? " is-active" : ""}" data-menu-filter="${cat.value}" aria-pressed="${cat.value === "all"}">${cat.label}</button>`
+        (category) => `
+          <button
+            type="button"
+            class="menu-filter${category.value === "all" ? " is-active" : ""}"
+            data-menu-filter="${category.value}"
+            aria-pressed="${category.value === "all"}"
+          >${escapeHtml(category.label)}</button>
+        `
       )
       .join("");
 
     filters.addEventListener("click", (event) => {
       const button = event.target.closest("[data-menu-filter]");
       if (!button) return;
+
       menuState.category = button.dataset.menuFilter;
-      filters.querySelectorAll("[data-menu-filter]").forEach((item) => {
-        const active = item === button;
-        item.classList.toggle("is-active", active);
-        item.setAttribute("aria-pressed", String(active));
+      filters.querySelectorAll("[data-menu-filter]").forEach((filter) => {
+        const isActive = filter === button;
+        filter.classList.toggle("is-active", isActive);
+        filter.setAttribute("aria-pressed", String(isActive));
       });
       renderMenuCategories();
     });
@@ -180,61 +191,47 @@
     });
   }
 
-  function renderFooterSocial() {
-    const wrap = document.getElementById("footerSocial");
-    if (!wrap) return;
-    const items = RESTAURANT.contact.social || [];
-    if (items.length === 0) {
-      wrap.innerHTML = "<li>Próximamente</li>";
-      return;
-    }
-    wrap.innerHTML = items
-      .map((s) => {
-        const icon = s.label.toLowerCase().includes("insta") ? "icon-instagram" : "icon-facebook";
-        return `<li class="footer-social-item"><svg aria-hidden="true"><use href="#${icon}"></use></svg><a href="${s.url}" target="_blank" rel="noopener">${s.label}</a></li>`;
-      })
-      .join("");
-  }
-
   function renderReviews() {
     const grid = document.getElementById("reviewGrid");
     if (!grid) return;
+
     grid.innerHTML = RESTAURANT.reviews
       .map(
-        (r) => `
-      <article class="review-card">
-        <span class="review-rating" aria-label="${r.rating} de 5 estrellas">${"★".repeat(r.rating)}</span>
-        <p class="review-quote">${r.text}</p>
-        <div class="review-author">
-          <strong>${r.author}</strong>
-          <span>${r.meta} · ${r.when} · ${r.source}</span>
-        </div>
-      </article>`
+        (review, index) => `
+          <article class="review-card">
+            <div class="review-topline">
+              <span>0${index + 1}</span>
+              <span aria-label="${review.rating} de 5 estrellas">${"★".repeat(review.rating)}</span>
+            </div>
+            <blockquote>“${escapeHtml(review.text)}”</blockquote>
+            <footer>
+              <strong>${escapeHtml(review.author)}</strong>
+              <span>${escapeHtml(review.when)} · ${escapeHtml(review.source)}</span>
+            </footer>
+          </article>
+        `
       )
       .join("");
-
-    const note = document.getElementById("reviewsNote");
-    if (note) note.textContent = RESTAURANT.reviewsTotalNote;
   }
 
-  function renderServicePills() {
-    const wrap = document.getElementById("servicePills");
-    if (!wrap) return;
-    wrap.innerHTML = RESTAURANT.services
-      .map((s) => {
-        if (s.available === true) {
-          return `<span class="service-pill"><svg aria-hidden="true"><use href="#icon-check"></use></svg>${s.label}</span>`;
-        }
-        if (s.available === null) {
-          return `<span class="service-pill">${s.label}${s.note ? ` — ${s.note}` : ""}</span>`;
-        }
-        return "";
-      })
+  function renderServices() {
+    const list = document.getElementById("serviceList");
+    if (!list) return;
+
+    list.innerHTML = RESTAURANT.services
+      .filter((service) => service.available !== false)
+      .map(
+        (service) => `
+          <span>
+            <i aria-hidden="true"></i>
+            ${escapeHtml(service.label)}
+          </span>
+        `
+      )
       .join("");
   }
 
-  /** Devuelve { weekdayIndex, minutes } según la hora actual en Guatemala. */
-  function nowInRestaurantTZ() {
+  function nowInRestaurantTimeZone() {
     const parts = new Intl.DateTimeFormat("en-US", {
       timeZone: RESTAURANT.timeZone,
       weekday: "short",
@@ -243,68 +240,24 @@
       hour12: false,
     }).formatToParts(new Date());
 
-    const map = {};
-    parts.forEach((p) => (map[p.type] = p.value));
+    const values = {};
+    parts.forEach((part) => {
+      values[part.type] = part.value;
+    });
 
     const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-    const hour = map.hour === "24" ? 0 : parseInt(map.hour, 10);
-    const minute = parseInt(map.minute, 10);
+    const hour = values.hour === "24" ? 0 : Number.parseInt(values.hour, 10);
+    const minute = Number.parseInt(values.minute, 10);
 
     return {
-      weekdayIndex: weekdayMap[map.weekday],
+      weekdayIndex: weekdayMap[values.weekday],
       minutes: hour * 60 + minute,
     };
   }
 
-  function toMinutes(hhmm) {
-    const [h, m] = hhmm.split(":").map(Number);
-    return h * 60 + m;
-  }
-
-  function renderHoursAndStatus() {
-    const tbody = document.querySelector("#hoursTable tbody");
-    const { weekdayIndex, minutes } = nowInRestaurantTZ();
-    const today = RESTAURANT.hours.find((h) => h.jsIndex === weekdayIndex);
-
-    if (tbody) {
-      tbody.innerHTML = RESTAURANT.hours
-        .map((h) => {
-          const isToday = h.jsIndex === weekdayIndex;
-          return `<tr class="${isToday ? "is-today" : ""}"><td>${h.day}${isToday ? " · hoy" : ""}</td><td>${h.label}</td></tr>`;
-        })
-        .join("");
-    }
-
-    let isOpen = false;
-    let statusText = "Cerrado ahora";
-
-    if (today) {
-      const openM = toMinutes(today.open);
-      const closeM = toMinutes(today.close);
-      isOpen = minutes >= openM && minutes < closeM;
-      if (isOpen) {
-        statusText = `Abierto ahora · cierra a las ${today.label.split("–")[1].trim()}`;
-      } else if (minutes < openM) {
-        statusText = `Cerrado ahora · abre hoy a las ${today.label.split("–")[0].trim()}`;
-      } else {
-        const next = findNextOpening(weekdayIndex);
-        if (next) statusText = `Cerrado ahora · abre ${next.when} a las ${next.hours.label.split("–")[0].trim()}`;
-      }
-    } else {
-      const next = findNextOpening(weekdayIndex);
-      if (next) statusText = `Cerrado ahora · abre ${next.when} a las ${next.hours.label.split("–")[0].trim()}`;
-    }
-
-    const flag = document.getElementById("openFlag");
-    const flagText = document.getElementById("openFlagText");
-    const heroStatus = document.getElementById("heroOpenStatus");
-
-    if (flag) {
-      flag.classList.remove("is-open", "is-closed");
-      flag.classList.add(isOpen ? "is-open" : "is-closed");
-    }
-    if (flagText) flagText.textContent = statusText;
-    if (heroStatus) heroStatus.textContent = isOpen ? "Abierto ahora" : "Cerrado ahora";
+  function toMinutes(value) {
+    const [hours, minutes] = value.split(":").map(Number);
+    return hours * 60 + minutes;
   }
 
   function findNextOpening(weekdayIndex) {
@@ -321,70 +274,166 @@
     return null;
   }
 
+  function renderHoursAndStatus() {
+    const tableBody = document.querySelector("#hoursTable tbody");
+    const { weekdayIndex, minutes } = nowInRestaurantTimeZone();
+    const today = RESTAURANT.hours.find((item) => item.jsIndex === weekdayIndex);
+
+    if (tableBody) {
+      tableBody.innerHTML = RESTAURANT.hours
+        .map(
+          (item) => `
+            <tr class="${item.jsIndex === weekdayIndex ? "is-today" : ""}">
+              <td>${escapeHtml(item.day)}${item.jsIndex === weekdayIndex ? " · hoy" : ""}</td>
+              <td>${escapeHtml(item.label)}</td>
+            </tr>
+          `
+        )
+        .join("");
+    }
+
+    let isOpen = false;
+    let statusText = "Cerrado ahora";
+
+    if (today) {
+      const opens = toMinutes(today.open);
+      const closes = toMinutes(today.close);
+      isOpen = minutes >= opens && minutes < closes;
+
+      if (isOpen) {
+        statusText = `Abierto ahora · cierra a las ${today.label.split("–")[1].trim()}`;
+      } else if (minutes < opens) {
+        statusText = `Cerrado ahora · abre hoy a las ${today.label.split("–")[0].trim()}`;
+      } else {
+        const next = findNextOpening(weekdayIndex);
+        if (next) statusText = `Cerrado ahora · abre ${next.when} a las ${next.hours.label.split("–")[0].trim()}`;
+      }
+    }
+
+    ["heroStatus", "visitStatus"].forEach((id) => {
+      const element = document.getElementById(id);
+      if (!element) return;
+      element.textContent = statusText;
+      element.classList.toggle("is-open", isOpen);
+    });
+  }
+
+  function renderFooterSocial() {
+    const container = document.getElementById("footerSocial");
+    if (!container) return;
+
+    container.innerHTML = RESTAURANT.contact.social
+      .map(
+        (social) => `
+          <a href="${escapeHtml(social.url)}" target="_blank" rel="noopener">
+            ${escapeHtml(social.label)} <span aria-hidden="true">↗</span>
+          </a>
+        `
+      )
+      .join("");
+  }
+
   function fallbackCopy(text) {
-    const input = document.createElement("textarea");
-    input.value = text;
-    input.setAttribute("readonly", "");
-    input.style.position = "fixed";
-    input.style.opacity = "0";
-    document.body.appendChild(input);
-    input.select();
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
     const copied = document.execCommand("copy");
-    input.remove();
+    textarea.remove();
     return copied;
   }
 
   function setupAddressCopy() {
-    const buttons = document.querySelectorAll("[data-copy-address]");
+    const button = document.querySelector("[data-copy-address]");
     const feedback = document.getElementById("copyFeedback");
-    if (!buttons.length) return;
+    if (!button) return;
 
-    buttons.forEach((button) => {
-      const originalLabel = button.textContent.trim();
-      button.addEventListener("click", async () => {
-        let copied = false;
-        try {
-          if (navigator.clipboard && window.isSecureContext) {
-            await navigator.clipboard.writeText(RESTAURANT.location.addressLine);
-            copied = true;
-          } else {
-            copied = fallbackCopy(RESTAURANT.location.addressLine);
-          }
-        } catch (_error) {
-          copied = false;
+    const originalLabel = button.textContent.trim();
+    button.addEventListener("click", async () => {
+      let copied = false;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(RESTAURANT.location.addressLine);
+          copied = true;
+        } else {
+          copied = fallbackCopy(RESTAURANT.location.addressLine);
         }
+      } catch (_error) {
+        copied = false;
+      }
 
-        button.textContent = copied ? "Dirección copiada" : "No se pudo copiar";
-        if (feedback) feedback.textContent = copied ? "La dirección se copió al portapapeles." : "Selecciona la dirección y cópiala manualmente.";
+      button.textContent = copied ? "Dirección copiada" : "No se pudo copiar";
+      if (feedback) {
+        feedback.textContent = copied
+          ? "La dirección está lista para compartir."
+          : "Selecciona la dirección y cópiala manualmente.";
+      }
 
-        window.setTimeout(() => {
-          button.textContent = originalLabel;
-          if (feedback) feedback.textContent = "";
-        }, 2500);
-      });
+      window.setTimeout(() => {
+        button.textContent = originalLabel;
+        if (feedback) feedback.textContent = "";
+      }, 2600);
     });
   }
 
-  function setupHeaderState() {
-    const header = document.querySelector(".site-header");
-    if (!header) return;
-    const update = () => header.classList.toggle("is-scrolled", window.scrollY > 16);
+  function setupMobileNavigation() {
+    const toggle = document.getElementById("navToggle");
+    const navigation = document.getElementById("mobileNav");
+    if (!toggle || !navigation) return;
+
+    const setOpen = (open) => {
+      toggle.setAttribute("aria-expanded", String(open));
+      navigation.classList.toggle("is-open", open);
+      document.body.classList.toggle("nav-open", open);
+    };
+
+    toggle.addEventListener("click", () => {
+      setOpen(!navigation.classList.contains("is-open"));
+    });
+
+    navigation.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => setOpen(false));
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") setOpen(false);
+    });
+  }
+
+  function setupHeaderAndProgress() {
+    const header = document.getElementById("siteHeader");
+    const progress = document.getElementById("scrollProgress");
+
+    const update = () => {
+      if (header) header.classList.toggle("is-scrolled", window.scrollY > 24);
+      if (progress) {
+        const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+        const percentage = scrollable > 0 ? Math.min(1, window.scrollY / scrollable) : 0;
+        progress.style.transform = `scaleX(${percentage})`;
+      }
+    };
+
     update();
     window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
   }
 
   function setupActiveNavigation() {
     if (!("IntersectionObserver" in window)) return;
-    const links = Array.from(document.querySelectorAll('.main-nav a[href^="#"]'));
+
+    const links = Array.from(document.querySelectorAll('.desktop-nav a[href^="#"]'));
     const sections = links
       .map((link) => document.querySelector(link.getAttribute("href")))
       .filter(Boolean);
-    if (!sections.length) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries.find((entry) => entry.isIntersecting);
         if (!visible) return;
+
         links.forEach((link) => {
           const active = link.getAttribute("href") === `#${visible.target.id}`;
           link.classList.toggle("is-active", active);
@@ -392,83 +441,68 @@
           else link.removeAttribute("aria-current");
         });
       },
-      { rootMargin: "-35% 0px -55% 0px", threshold: 0 }
+      { rootMargin: "-38% 0px -52% 0px", threshold: 0 }
     );
 
     sections.forEach((section) => observer.observe(section));
   }
 
-  function setupScrollReveal() {
-    const targets = document.querySelectorAll(
-      ".section-head, .proof-item, .about-copy, .trait, .menu-card, .menu-category, .rating-summary, .review-card, .info-card, .location-panel"
-    );
+  function registerRevealTargets(root = document) {
+    const targets = root.querySelectorAll(".reveal, .flavor-card, .menu-category, .review-card");
     if (!targets.length) return;
 
-    if (!("IntersectionObserver" in window) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      targets.forEach((target) => target.classList.add("reveal-item", "is-visible"));
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    targets.forEach((target, index) => {
+      if (target.classList.contains("reveal-ready")) return;
+      target.classList.add("reveal-ready");
+      target.style.setProperty("--reveal-delay", `${(index % 3) * 90}ms`);
+
+      if (reduceMotion || !revealObserver) {
+        target.classList.add("is-visible");
+      } else {
+        revealObserver.observe(target);
+      }
+    });
+  }
+
+  function setupScrollReveal() {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!("IntersectionObserver" in window) || reduceMotion) {
+      registerRevealTargets(document);
       return;
     }
 
-    const observer = new IntersectionObserver(
+    revealObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
           entry.target.classList.add("is-visible");
-          observer.unobserve(entry.target);
+          revealObserver.unobserve(entry.target);
         });
       },
-      { rootMargin: "0px 0px -8%", threshold: 0.12 }
+      { rootMargin: "0px 0px -9%", threshold: 0.12 }
     );
 
-    targets.forEach((target, index) => {
-      target.classList.add("reveal-item");
-      target.style.setProperty("--reveal-delay", `${(index % 3) * 80}ms`);
-      observer.observe(target);
-    });
-  }
-
-  function setupMobileNav() {
-    const toggle = document.getElementById("navToggle");
-    const panel = document.getElementById("mobilePanel");
-    const icon = document.getElementById("navToggleIcon");
-    if (!toggle || !panel) return;
-
-    function setOpen(open) {
-      panel.classList.toggle("is-open", open);
-      toggle.setAttribute("aria-expanded", String(open));
-      if (icon) icon.innerHTML = `<use href="${open ? "#icon-close" : "#icon-menu"}"></use>`;
-    }
-
-    toggle.addEventListener("click", () => {
-      setOpen(!panel.classList.contains("is-open"));
-    });
-
-    panel.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", () => setOpen(false));
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") setOpen(false);
-    });
+    registerRevealTargets(document);
   }
 
   function setFooterYear() {
-    const el = document.getElementById("footerYear");
-    if (el) el.textContent = new Date().getFullYear();
+    const year = document.getElementById("footerYear");
+    if (year) year.textContent = new Date().getFullYear();
   }
 
   document.addEventListener("DOMContentLoaded", () => {
     bindData(document);
-    renderMenu();
-    setupMenuExplorer();
+    renderFeaturedImages();
     renderMenuCategories();
+    setupMenuExplorer();
     renderReviews();
-    renderServicePills();
-    renderFooterSocial();
+    renderServices();
     renderHoursAndStatus();
-    setupMobileNav();
+    renderFooterSocial();
     setupAddressCopy();
-    setupHeaderState();
+    setupMobileNavigation();
+    setupHeaderAndProgress();
     setupActiveNavigation();
     setupScrollReveal();
     setFooterYear();

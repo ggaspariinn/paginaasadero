@@ -26,11 +26,8 @@ Es un sitio 100% estático: sube el contenido de esta carpeta a cualquier
 hosting estático (Netlify, Vercel, GitHub Pages, cPanel, etc.). No hay
 backend ni variables de entorno que configurar.
 
-Antes de publicar:
-1. Reemplaza `https://www.ejemplo-asadero.gt/` por el dominio real en
-   `index.html` (canonical, Open Graph, JSON-LD `hasMenu`), `robots.txt`
-   y `sitemap.xml`.
-2. Aclara el horario: la ficha de Google dice 9:00 a.m.–10:00 p.m. todos
+Antes de publicar, aclara el horario: la ficha de Google dice
+9:00 a.m.–10:00 p.m. todos
    los días (lo que se publicó), pero una publicación de Facebook del
    negocio menciona "12pm a 9:30pm". Confirma cuál es el vigente y
    actualiza `RESTAURANT.hours` en `data.js` si hace falta.
@@ -41,16 +38,17 @@ Antes de publicar:
 index.html          Página única, HTML semántico + JSON-LD
 styles.css          Sistema de diseño (tokens, componentes, responsive)
 data.js             Única fuente de datos del restaurante (editar aquí)
-main.js             Renderizado desde data.js + interacción (nav, horario)
-assets/img/optimized  Imágenes en JPEG y WebP, comprimidas
-assets/img/original    Imágenes originales sin comprimir (respaldo)
+main.js             Renderizado, carta interactiva, horario y navegación
+assets/img/restaurant Fotografías limpias usadas en la página
+assets/img/social     Imagen de vista previa al compartir el enlace
+assets/img/original   Artes anteriores conservados como respaldo, no visibles
 assets/icons/favicon.png
-robots.txt / sitemap.xml
 ```
 
-Las fotografías actualmente incluidas proceden de publicaciones públicas del
-Instagram oficial `@asadero_guatemala`. Se conserva una copia en
-`assets/img/original/` y una versión optimizada en JPEG y WebP.
+Las fotografías visibles proceden de la ficha pública de Asadero Bar & Grill
+en Google Maps. Se seleccionaron únicamente imágenes reales de comida y del
+ambiente, sin precios, textos ni carteles promocionales. Los antiguos artes de
+Instagram permanecen como respaldo, pero el sitio ya no los carga.
 
 ## Actualizar contenido
 
@@ -59,6 +57,8 @@ sociales) vive en `data.js`. No hace falta tocar el HTML para:
 
 - Agregar/quitar un platillo del menú completo → editar el arreglo
   `menuCategories`.
+- Cambiar las imágenes y textos destacados → editar `featuredImages` y
+  `visualStory`.
 - Cambiar el horario → editar el arreglo `hours`.
 - Agregar una opinión → editar el arreglo `reviews`.
 

@@ -8,7 +8,8 @@
  *  - Menú y precios: fotografía de la pizarra física del restaurante,
  *    proporcionada por el negocio, contrastada con su Instagram
  *    (@asadero_guatemala) y su página de Facebook oficial (mismo teléfono).
- *  - Fotografías de platillos: proporcionadas por el negocio.
+ *  - Fotografías: publicaciones públicas de la ficha oficial del negocio
+ *    en Google Maps. Se eligieron imágenes sin carteles promocionales.
  *
  * Para actualizar el sitio (nuevo horario, nuevo plato, nueva opinión),
  * edita únicamente este archivo.
@@ -83,50 +84,46 @@ const RESTAURANT = {
   ],
   timeZone: "America/Guatemala",
 
-  // Fotografías tomadas de publicaciones públicas del Instagram oficial.
-  // Los precios mostrados en esas publicaciones eran promociones puntuales,
-  // por eso se pide confirmar disponibilidad y precio con el restaurante.
-  menuHighlights: [
+  featuredImages: [
     {
-      id: "costilla-ahumada",
-      name: "Costilla Ahumada",
-      category: "Especialidad a la brasa",
-      price: null,
-      priceNote: "Consulta disponibilidad y precio",
+      id: "tacos-casa",
+      name: "Tacos de la casa",
+      eyebrow: "Para compartir",
       description:
-        "Costilla ahumada presentada con distintas salsas de la casa, fotografiada para el Instagram oficial del restaurante.",
-      image: "costilla-ahumada",
-      alt: "Costilla ahumada de Asadero Bar & Grill en publicación de su Instagram oficial",
-      tags: ["Costilla", "Ahumada"],
-      sourcePost: "https://www.instagram.com/asadero_guatemala/p/DY7ixqOGrPi/",
+        "Preparaciones frescas, vegetales, salsas y el toque de la casa sobre tortilla.",
+      image: "tacos-casa.jpg",
+      alt: "Dos tacos servidos en Asadero Bar & Grill con cebolla morada, vegetales y limón",
     },
     {
-      id: "tacos",
-      name: "Tacos de la Casa",
-      category: "Martes de tacos",
-      price: null,
-      priceNote: "Consulta especialidades y precio",
+      id: "plato-asadero",
+      name: "De la brasa a la mesa",
+      eyebrow: "Fuego real",
       description:
-        "Tacos preparados con especialidades como camarón, costilla, pulpo y champiñón, según disponibilidad.",
-      image: "tacos",
-      alt: "Taco de camarón de Asadero Bar & Grill publicado en su Instagram oficial",
-      tags: ["Tacos", "Especialidades"],
-      sourcePost: "https://www.instagram.com/asadero_guatemala/p/DZX2BKACYlN/",
+        "Carnes, acompañamientos y salsas servidos sin complicaciones y con sabor ahumado.",
+      image: "plato-asadero.jpg",
+      alt: "Plato de carne a la brasa con pasta, vegetales, pan y salsas en Asadero Bar & Grill",
     },
     {
-      id: "ramen",
-      name: "Ramen Asadero",
-      category: "Especial de temporada",
-      price: null,
-      priceNote: "Consulta disponibilidad y precio",
+      id: "bebida-rosa",
+      name: "Algo frío para brindar",
+      eyebrow: "Bar & Grill",
       description:
-        "Ramen servido con opciones de cerdo, camarón, res o vegetales, anunciado como especial de mitad de semana.",
-      image: "ramen",
-      alt: "Ramen con cerdo, huevo, hongos y vegetales publicado por Asadero Bar & Grill",
-      tags: ["Ramen", "Temporada"],
-      sourcePost: "https://www.instagram.com/asadero_guatemala/p/DZaSm0rjUN0/",
+        "Bebidas preparadas para acompañar una sobremesa larga entre amigos.",
+      image: "bebida-rosa.jpg",
+      alt: "Bebida rosa con hielo, romero y cítrico servida en Asadero Bar & Grill",
     },
   ],
+
+  visualStory: {
+    hero: "hero-fuego.jpg",
+    heroAlt: "Especialidad caliente con carne, hongos y queso servida en sartén en Asadero Bar & Grill",
+    ambience: "ambiente-rustico.jpg",
+    ambienceAlt: "Mesas de madera y patio abierto del ambiente rústico de Asadero Bar & Grill",
+    cocktail: "michelada-camaron.jpg",
+    cocktailAlt: "Bebida preparada con camarón y limón sobre una mesa de madera",
+    facade: "fachada-asadero.jpg",
+    facadeAlt: "Fachada amarilla y rústica de Asadero Bar & Grill en Villa Canales",
+  },
 
   // Menú completo transcrito de la pizarra física del restaurante.
   menuCategories: [
