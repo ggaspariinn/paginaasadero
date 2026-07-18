@@ -1,0 +1,23 @@
+{
+  "name": "primary",
+  "version": "1.0.0",
+  "description": "Sitio estático (HTML + CSS + JS, sin build ni dependencias) para Asadero Bar & Grill, Villa Canales, Guatemala.",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ggaspariinn/AsaderoBarGrill.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ggaspariinn/AsaderoBarGrill/issues"
+  },
+  "homepage": "https://github.com/ggaspariinn/AsaderoBarGrill#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
